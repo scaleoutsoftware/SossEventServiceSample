@@ -1,6 +1,6 @@
 ﻿namespace SossEventService
 {
-    partial class Service1
+    partial class ExpirationEventService
     {
         /// <summary> 
         /// Required designer variable.
