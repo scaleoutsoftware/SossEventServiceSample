@@ -40,7 +40,7 @@
             // 
             this.serviceInstaller.Description = "Handles objects expiration events from the local ScaleOut StateServer service.";
             this.serviceInstaller.DisplayName = "ScaleOut Expiration Event Handler";
-            this.serviceInstaller.ServiceName = "SossEventHandler";
+            this.serviceInstaller.ServiceName = "SossEventService";
             this.serviceInstaller.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
             // ProjectInstaller
