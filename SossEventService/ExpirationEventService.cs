@@ -36,21 +36,81 @@ using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 
+using Soss.Client;
+
 namespace SossEventService
 {
     public partial class ExpirationEventService : ServiceBase
     {
+        private readonly string _cacheName = "TODO: Your Cache Name here!";
+
+        // NamedCache instance used to access the SOSS datastore:
+        private NamedCache _nc = null;
+
+        // Trace source associated with this service:
+        private TraceSource _traceSource = new TraceSource("ExpirationEventService", defaultLevel: SourceLevels.Off);
+
+        /// <summary>
+        /// Constructor. Typically should not be modified.
+        /// Use OnStart override below to handle initialization of your service.
+        /// </summary>
         public ExpirationEventService()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Initialize the service.
+        /// </summary>
+        /// <param name="args">Data passed by the SCM's start command.</param>
         protected override void OnStart(string[] args)
         {
+            try
+            {
+                _nc = CacheFactory.GetCache(_cacheName);
+                _nc.ObjectExpired += HandleObjectExpired;
+                _traceSource.TraceEvent(TraceEventType.Verbose, 1, $"Registered for event handling for named cache '{_cacheName}'");
+            }
+            catch (Exception ex)
+            {
+                _traceSource.TraceData(TraceEventType.Error, 2, ex);
+                throw;
+            }
         }
+
+        /// <summary>
+        /// Event handler for expiring objects in a ScaleOut named cache.
+        /// </summary>
+        private void HandleObjectExpired(object sender, NamedCacheObjExpiredEventArgs eventArgs)
+        {
+            try
+            {
+                // TODO: custom event handling logic:
+                var expiringkey = eventArgs.CachedObjectId;
+                object obj = _nc.Retrieve(expiringkey, acquireLock: false);
+                _traceSource.TraceEvent(TraceEventType.Verbose, 101, obj.ToString());
+
+                // Allow the expiring object to be removed from the store. (Or, set to 
+                // NamedCacheObjDisposition.Save for objects that should not be removed.)
+                eventArgs.NamedCacheObjDisposition = NamedCacheObjDisposition.Remove;
+
+                // Trace successful completion.
+                _traceSource.TraceEvent(TraceEventType.Verbose, 3, "Handled expiration event successfully.");
+            }
+            catch (Exception ex)
+            {
+                _traceSource.TraceEvent(TraceEventType.Warning, 4, $"Error handling expiration event:\n{ex}");
+            }
+        }
+
 
         protected override void OnStop()
         {
+        }
+
+        public void Debug(string[] args)
+        {
+            OnStart(args);
         }
     }
 }
